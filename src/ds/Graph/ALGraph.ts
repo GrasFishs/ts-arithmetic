@@ -1,4 +1,5 @@
 import { Graph } from './Graph';
+import { ArrayQueue } from '../List/Queue/ArrayQueue';
 
 export class ALArc<V> {
   constructor(public vertex: ALVertex<V>, public nextArc: ALArc<V> | null) {}
@@ -100,8 +101,44 @@ export class ALGraph<V> implements Graph<ALVertex<V>, V> {
     }
     return false;
   }
-  DFS(visitor: (v: ALVertex<V>) => void): void {}
-  BFS(visitor: (v: ALVertex<V>) => void): void {}
+  DFS(visitor: (v: ALVertex<V>) => void): void {
+    const visited = new WeakMap<ALVertex<V>, boolean>();
+    this.vertexes.forEach(vert => visited.set(vert, false));
+
+    function traverse(vert: ALVertex<V>) {
+      visitor(vert);
+      visited.set(vert, true);
+      for (let p = vert.arc; p != null; p = p.nextArc) {
+        if (!visited.get(p.vertex)) traverse(p.vertex);
+      }
+    }
+
+    for (const vert of this.vertexes) {
+      if (!visited.get(vert)) traverse(vert);
+    }
+  }
+  BFS(visitor: (v: ALVertex<V>) => void): void {
+    const queue = new ArrayQueue<ALVertex<V>>();
+    const visited = new WeakMap<ALVertex<V>, boolean>();
+    this.vertexes.forEach(vert => visited.set(vert, false));
+    for (const vert of this.vertexes) {
+      if (!visited.get(vert)) {
+        visited.set(vert, true);
+        visitor(vert);
+        queue.enqueue(vert);
+        while (!queue.isEmpty()) {
+          const v = queue.dequeue()!;
+          for (let p = v.arc; p !== null; p = p.nextArc) {
+            if (!visited.get(p.vertex)) {
+              visited.set(p.vertex, true);
+              visitor(p.vertex);
+              queue.enqueue(p.vertex);
+            }
+          }
+        }
+      }
+    }
+  }
 
   print() {
     let str = '';

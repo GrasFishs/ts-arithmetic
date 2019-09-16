@@ -1,4 +1,4 @@
-export interface Graph<Vert, Value> {
+export interface Graph<Vert = any, Value = any> {
   get: (value: Value) => Vert | undefined;
   set: (vert: Vert, value: Value) => boolean;
   addVert: (target: Vert) => boolean;

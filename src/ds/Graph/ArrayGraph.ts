@@ -1,4 +1,5 @@
 import { Graph } from './Graph';
+import { ArrayQueue } from '../List/Queue/ArrayQueue';
 
 export class ArrayVertex<V> {
   constructor(public value: V) {}
@@ -8,11 +9,18 @@ export class ArrayGraph<V> implements Graph<ArrayVertex<V>, V> {
   public vertexes: ArrayVertex<V>[] = [];
   public arcs: number[][] = [];
 
-  constructor(vertexes: ArrayVertex<V>[], arcs: number[][]) {
-    this.vertexes = vertexes;
+  constructor(vertexes: V[], arcs: number[][]) {
+    this.vertexes = this.createArrayVertexes(vertexes);
     this.arcs = arcs;
   }
-  
+
+  createArrayVertexes<V>(arr: V[]) {
+    const vertexes: ArrayVertex<V>[] = [];
+    for (const v of arr) {
+      vertexes.push(new ArrayVertex(v));
+    }
+    return vertexes;
+  }
 
   get(value: V): ArrayVertex<V> | undefined {
     return this.vertexes.find(vert => vert.value === value);
@@ -64,8 +72,47 @@ export class ArrayGraph<V> implements Graph<ArrayVertex<V>, V> {
     }
     return false;
   }
-  DFS(visitor: (v: ArrayVertex<V>) => void): void {}
-  BFS(visitor: (v: ArrayVertex<V>) => void): void {}
+  DFS(visitor: (v: ArrayVertex<V>) => void): void {
+    const visited = this.vertexes.map(() => false);
+
+    const traverse = (vertIndex: number) => {
+      visitor(this.vertexes[vertIndex]);
+      visited[vertIndex] = true;
+      for (let j = 0; j < this.arcs[vertIndex].length; j++) {
+        const arc = this.arcs[vertIndex][j];
+        if (arc === 1 && !visited[j]) {
+          traverse(j);
+        }
+      }
+    };
+    for (let i = 0; i < this.vertexes.length; i++) {
+      if (!visited[i]) traverse(i);
+    }
+  }
+  BFS(visitor: (v: ArrayVertex<V>) => void): void {
+    const queue = new ArrayQueue<ArrayVertex<V>>();
+    const visited = this.vertexes.map(() => false);
+    for (let i = 0; i < this.vertexes.length; i++) {
+      if (!visited[i]) {
+        const vert = this.vertexes[i];
+        visitor(vert);
+        visited[i] = true;
+        queue.enqueue(vert);
+        while (!queue.isEmpty()) {
+          const vert = queue.dequeue()!;
+          const index = this.vertexes.findIndex(v => v === vert);
+          for (let j = 0; j < this.arcs[index].length; j++) {
+            if (this.arcs[index][j] === 1 && !visited[j]) {
+              const v = this.vertexes[j];
+              visitor(v);
+              visited[j] = true;
+              queue.enqueue(v);
+            }
+          }
+        }
+      }
+    }
+  }
 
   print() {
     let str = '';
