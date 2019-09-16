@@ -40,15 +40,15 @@ export class ALVertex<V> {
 export class ALGraph<V> implements Graph<ALVertex<V>, V> {
   public vertexes: ALVertex<V>[] = [];
 
-  constructor(nodes: V[], _arcs: number[][]) {
-    this.create(nodes, _arcs);
+  constructor(nodes: V[], _edges: number[][]) {
+    this.create(nodes, _edges);
   }
 
-  create(nodes: V[], arcs: number[][]) {
+  create(nodes: V[], edges: number[][]) {
     this.vertexes = nodes.map(node => new ALVertex(node, null));
-    for (let i = 0; i < arcs.length; i++) {
-      for (let j = 0; j < arcs[i].length; j++) {
-        if (arcs[i][j] === 1) {
+    for (let i = 0; i < edges.length; i++) {
+      for (let j = 0; j < edges[i].length; j++) {
+        if (edges[i][j] === 1) {
           this.vertexes[i].append(new ALArc(this.vertexes[j], null));
         }
       }
@@ -72,7 +72,7 @@ export class ALGraph<V> implements Graph<ALVertex<V>, V> {
     this.vertexes.push(target);
     return true;
   }
-  addArc(target: ALVertex<V>, src: ALVertex<V>): boolean {
+  addEdge(target: ALVertex<V>, src: ALVertex<V>): boolean {
     const t = this.vertexes.find(vert => vert === target);
     const s = this.vertexes.find(vert => vert === src);
     if (t && s) {
@@ -101,40 +101,69 @@ export class ALGraph<V> implements Graph<ALVertex<V>, V> {
     }
     return false;
   }
-  DFS(visitor: (v: ALVertex<V>) => void): void {
+
+  adj(vert: ALVertex<V>): ALVertex<V>[] {
+    const vertexes: ALVertex<V>[] = [];
+    for (let p = vert.arc; p != null; p = p.nextArc) {
+      vertexes.push(p.vertex);
+    }
+    return vertexes;
+  }
+
+  DFS(
+    from: ALVertex<V>,
+    visitor: (v: ALVertex<V>, src: ALVertex<V>) => void
+  ): void {
     const visited = new WeakMap<ALVertex<V>, boolean>();
     this.vertexes.forEach(vert => visited.set(vert, false));
 
-    function traverse(vert: ALVertex<V>) {
-      visitor(vert);
-      visited.set(vert, true);
-      for (let p = vert.arc; p != null; p = p.nextArc) {
-        if (!visited.get(p.vertex)) traverse(p.vertex);
+    const traverse = (vert: ALVertex<V>, src: ALVertex<V>) => {
+      if (!visited.get(vert)) {
+        visitor(vert, src);
+        visited.set(vert, true);
+        for (const v of this.adj(vert)) {
+          if (!visited.get(v)) traverse(v, vert);
+        }
       }
-    }
+    };
 
-    for (const vert of this.vertexes) {
-      if (!visited.get(vert)) traverse(vert);
-    }
+    traverse(from, from);
   }
-  BFS(visitor: (v: ALVertex<V>) => void): void {
+
+  pathTo(src: ALVertex<V>, to: ALVertex<V>): ALVertex<V>[] {
+    const vertexes: ALVertex<V>[] = [];
+    const edgeTo = new WeakMap<ALVertex<V>, ALVertex<V> | null>();
+    this.DFS(src, (vert, src) => {
+      if (vert !== src) {
+        edgeTo.set(vert, src);
+      }
+    });
+
+    for (let v = to; v !== src; v = edgeTo.get(v)!) {
+      vertexes.unshift(v);
+    }
+    vertexes.unshift(src)
+    return vertexes;
+  }
+
+  BFS(
+    from: ALVertex<V>,
+    visitor: (v: ALVertex<V>, src: ALVertex<V>) => void
+  ): void {
     const queue = new ArrayQueue<ALVertex<V>>();
     const visited = new WeakMap<ALVertex<V>, boolean>();
     this.vertexes.forEach(vert => visited.set(vert, false));
-    for (const vert of this.vertexes) {
-      if (!visited.get(vert)) {
-        visited.set(vert, true);
-        visitor(vert);
-        queue.enqueue(vert);
-        while (!queue.isEmpty()) {
-          const v = queue.dequeue()!;
-          for (let p = v.arc; p !== null; p = p.nextArc) {
-            if (!visited.get(p.vertex)) {
-              visited.set(p.vertex, true);
-              visitor(p.vertex);
-              queue.enqueue(p.vertex);
-            }
-          }
+
+    visited.set(from, true);
+    visitor(from, from);
+    queue.enqueue(from);
+    while (!queue.isEmpty()) {
+      const v = queue.dequeue()!;
+      for (const vv of this.adj(v)) {
+        if (!visited.get(vv)) {
+          visited.set(vv, true);
+          visitor(vv, v);
+          queue.enqueue(vv);
         }
       }
     }
@@ -142,13 +171,10 @@ export class ALGraph<V> implements Graph<ALVertex<V>, V> {
 
   print() {
     let str = '';
-    for (let i = 0; i < this.vertexes.length; i++) {
-      const vert = this.vertexes[i];
+    for (const vert of this.vertexes) {
       str += `[${vert.value}]`;
-      let p = vert.arc;
-      while (p !== null) {
-        str += ` -> ${p.vertex.value}`;
-        p = p.nextArc;
+      for (const v of this.adj(vert)) {
+        str += ` -> ${v.value}`;
       }
       str += '\n';
     }

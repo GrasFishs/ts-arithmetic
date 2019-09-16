@@ -7,11 +7,11 @@ export class ArrayVertex<V> {
 
 export class ArrayGraph<V> implements Graph<ArrayVertex<V>, V> {
   public vertexes: ArrayVertex<V>[] = [];
-  public arcs: number[][] = [];
+  public edges: number[][] = [];
 
-  constructor(vertexes: V[], arcs: number[][]) {
+  constructor(vertexes: V[], edges: number[][]) {
     this.vertexes = this.createArrayVertexes(vertexes);
-    this.arcs = arcs;
+    this.edges = edges;
   }
 
   createArrayVertexes<V>(arr: V[]) {
@@ -34,19 +34,19 @@ export class ArrayGraph<V> implements Graph<ArrayVertex<V>, V> {
   }
   addVert(vert: ArrayVertex<V>): boolean {
     this.vertexes.push(vert);
-    this.arcs.push(Array.from({ length: this.vertexes.length - 1 }).fill(
+    this.edges.push(Array.from({ length: this.vertexes.length - 1 }).fill(
       0
     ) as number[]);
     for (let i = 0; i < this.vertexes.length; i++) {
-      this.arcs[i].push(0);
+      this.edges[i].push(0);
     }
     return true;
   }
-  addArc(target: ArrayVertex<V>, src: ArrayVertex<V>): boolean {
+  addEdge(target: ArrayVertex<V>, src: ArrayVertex<V>): boolean {
     const i = this.vertexes.findIndex(vert => vert === target);
     const j = this.vertexes.findIndex(vert => vert === src);
     if (i !== -1 && j !== -1) {
-      this.arcs[i][j] = 1;
+      this.edges[i][j] = 1;
       return true;
     }
     return false;
@@ -55,9 +55,9 @@ export class ArrayGraph<V> implements Graph<ArrayVertex<V>, V> {
     const index = this.vertexes.findIndex(vert => vert === target);
     if (index !== -1) {
       for (let i = 0; i < this.vertexes.length; i++) {
-        this.arcs[i].splice(index, 1);
+        this.edges[i].splice(index, 1);
       }
-      this.arcs.splice(index, 1);
+      this.edges.splice(index, 1);
       this.vertexes.splice(index, 1);
       return true;
     }
@@ -67,48 +67,75 @@ export class ArrayGraph<V> implements Graph<ArrayVertex<V>, V> {
     const i = this.vertexes.findIndex(vert => vert === target);
     const j = this.vertexes.findIndex(vert => vert === src);
     if (i !== -1 && j !== -1 && i !== j) {
-      this.arcs[i][j] = 0;
+      this.edges[i][j] = 0;
       return true;
     }
     return false;
   }
-  DFS(visitor: (v: ArrayVertex<V>) => void): void {
-    const visited = this.vertexes.map(() => false);
 
-    const traverse = (vertIndex: number) => {
-      visitor(this.vertexes[vertIndex]);
-      visited[vertIndex] = true;
-      for (let j = 0; j < this.arcs[vertIndex].length; j++) {
-        const arc = this.arcs[vertIndex][j];
-        if (arc === 1 && !visited[j]) {
-          traverse(j);
+  adj(vert: ArrayVertex<V>): ArrayVertex<V>[] {
+    const index = this.vertexes.findIndex(v => v === vert);
+    const vertexes: ArrayVertex<V>[] = [];
+    this.edges[index].forEach((arc, ind) => {
+      if (arc === 1) {
+        vertexes.push(this.vertexes[ind]);
+      }
+    });
+    return vertexes;
+  }
+
+  pathTo(src: ArrayVertex<V>, to: ArrayVertex<V>): ArrayVertex<V>[] {
+    const vertexes: ArrayVertex<V>[] = [];
+    const edgeTo = new WeakMap<ArrayVertex<V>, ArrayVertex<V> | null>();
+    this.DFS(src, (vert, src) => {
+      if (vert !== src) {
+        edgeTo.set(vert, src);
+      }
+    });
+
+    for (let v = to; v !== src; v = edgeTo.get(v)!) {
+      vertexes.unshift(v);
+    }
+    vertexes.unshift(src);
+    return vertexes;
+  }
+
+  DFS(
+    from: ArrayVertex<V>,
+    visitor: (v: ArrayVertex<V>, src: ArrayVertex<V>) => void
+  ): void {
+    const visited = new WeakMap<ArrayVertex<V>, boolean>();
+    this.vertexes.forEach(vert => visited.set(vert, false));
+
+    const traverse = (vert: ArrayVertex<V>, src: ArrayVertex<V>) => {
+      if (!visited.get(vert)) {
+        visitor(vert, src);
+        visited.set(vert, true);
+        for (const v of this.adj(vert)) {
+          if (!visited.get(v)) traverse(v, vert);
         }
       }
     };
-    for (let i = 0; i < this.vertexes.length; i++) {
-      if (!visited[i]) traverse(i);
-    }
+    traverse(from, from);
   }
-  BFS(visitor: (v: ArrayVertex<V>) => void): void {
+  BFS(
+    from: ArrayVertex<V>,
+    visitor: (v: ArrayVertex<V>, src: ArrayVertex<V>) => void
+  ): void {
     const queue = new ArrayQueue<ArrayVertex<V>>();
-    const visited = this.vertexes.map(() => false);
-    for (let i = 0; i < this.vertexes.length; i++) {
-      if (!visited[i]) {
-        const vert = this.vertexes[i];
-        visitor(vert);
-        visited[i] = true;
-        queue.enqueue(vert);
-        while (!queue.isEmpty()) {
-          const vert = queue.dequeue()!;
-          const index = this.vertexes.findIndex(v => v === vert);
-          for (let j = 0; j < this.arcs[index].length; j++) {
-            if (this.arcs[index][j] === 1 && !visited[j]) {
-              const v = this.vertexes[j];
-              visitor(v);
-              visited[j] = true;
-              queue.enqueue(v);
-            }
-          }
+    const visited = new WeakMap<ArrayVertex<V>, boolean>();
+    this.vertexes.forEach(vert => visited.set(vert, false));
+
+    visitor(from, from);
+    visited.set(from, true);
+    queue.enqueue(from);
+    while (!queue.isEmpty()) {
+      const v = queue.dequeue()!;
+      for (const vv of this.adj(v)) {
+        if (!visited.get(vv)) {
+          visitor(vv, v);
+          visited.set(vv, true);
+          queue.enqueue(vv);
         }
       }
     }
@@ -116,10 +143,10 @@ export class ArrayGraph<V> implements Graph<ArrayVertex<V>, V> {
 
   print() {
     let str = '';
-    for (let i = 0; i < this.arcs.length; i++) {
+    for (let i = 0; i < this.edges.length; i++) {
       str += '| ';
-      for (let j = 0; j < this.arcs[i].length; j++) {
-        str += this.arcs[i][j] + ' ';
+      for (let j = 0; j < this.edges[i].length; j++) {
+        str += this.edges[i][j] + ' ';
       }
       str += '|\n';
     }

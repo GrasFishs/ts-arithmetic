@@ -10,8 +10,9 @@ export abstract class Drawer {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
-  protected line(point1: Point, point2: Point) {
+  protected line(point1: Point, point2: Point, isVisited: boolean) {
     this.ctx.beginPath();
+    this.ctx.fillStyle = isVisited ? '#c62828' : '#444444';
     this.ctx.moveTo(point1.left, point1.top);
     this.ctx.lineTo(point2.left, point2.top);
     this.ctx.closePath();
@@ -21,7 +22,7 @@ export abstract class Drawer {
   protected drawCircle(x: number, y: number, isVisited: boolean, text: string) {
     this.ctx.beginPath();
     this.ctx.arc(x, y, 16, 0, 2 * Math.PI, true);
-    this.ctx.fillStyle = isVisited ? '#ff0000' : '#444444';
+    this.ctx.fillStyle = isVisited ? '#c62828' : '#444444';
     this.ctx.closePath();
     this.ctx.fill();
     this.ctx.fillStyle = '#ffffff';
@@ -96,7 +97,10 @@ export abstract class Drawer {
     ];
   }
 
-  public abstract drawGraph(visitedVert: boolean[]): void;
+  public abstract drawGraph(
+    visitedVert: boolean[],
+    visitedEdge: number[]
+  ): void;
 
   public abstract render(): void;
 }
