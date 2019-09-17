@@ -1,5 +1,5 @@
 import { LinearList } from './LinearList';
-import { NNode as LinkedNode } from '../util/index'
+import { NNode as LinkedNode } from '../util/index';
 import { Around } from '../../../util/Aspect/Aspect';
 import { Timer } from '../../../util/Aspect/Timer';
 
@@ -93,7 +93,7 @@ export class LinkedList<T> extends LinearList<T> {
     } else if (index === this._length - 1) {
       return this.tail;
     } else {
-      return null;
+      return this.head;
     }
   }
 

@@ -1,8 +1,8 @@
-import $ from 'jquery';
 import { ArrayGraph, ArrayVertex } from './ds/Graph/ArrayGraph';
 import { ArrayGraphDrawer } from './drawer/Graph/ArrayGraphDrawer';
 import { ALGraph } from './ds/Graph/ALGraph';
 import { ALGraphDrawer } from './drawer/Graph/ALGraphDrawer';
+import { Hash } from './ds/Map/Hash';
 
 const edges = [
   [0, 1, 1, 0, 0, 0, 0, 0],
@@ -48,26 +48,26 @@ function main() {
       graphDrawer.drawGraph(visited);
     }, i * 200);
   }
-
-  // const lines = $('.del-lines');
-  // graph.print();
-  // for (let i = 0; i < graph.edges.length; i++) {
-  //   for (let j = 0; j < graph.edges[i].length; j++) {
-  //     if (graph.edges[i][j] === 1) {
-  //       const target = graph.vertexes[i];
-  //       const src = graph.vertexes[j];
-  //       const line = $('<div class="del-line"></div>');
-  //       line.html(`${target.value}=>${src.value}`);
-  //       line.on('click', () => {
-  //         graph.delArc(target, src);
-  //         ctx.clearRect(0, 0, cvs.width, cvs.height);
-  //         graph.print();
-  //         drawGraph(ctx, graph);
-  //       });
-  //       lines.append(line);
-  //     }
-  //   }
-  // }
 }
+// const lines = $('.del-lines');
+// graph.print();
+// for (let i = 0; i < graph.edges.length; i++) {
+//   for (let j = 0; j < graph.edges[i].length; j++) {
+//     if (graph.edges[i][j] === 1) {
+//       const target = graph.vertexes[i];
+//       const src = graph.vertexes[j];
+//       const line = $('<div class="del-line"></div>');
+//       line.html(`${target.value}=>${src.value}`);
+//       line.on('click', () => {
+//         graph.delArc(target, src);
+//         ctx.clearRect(0, 0, cvs.width, cvs.height);
+//         graph.print();
+//         drawGraph(ctx, graph);
+//       });
+//       lines.append(line);
+//     }
+//   }
+// }
+// }
 
 main();

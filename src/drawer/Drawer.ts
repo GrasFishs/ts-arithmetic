@@ -2,7 +2,11 @@ import { Graph } from '../ds/Graph/Graph';
 
 export abstract class Drawer {
   protected ctx: CanvasRenderingContext2D;
-  constructor(protected canvas: HTMLCanvasElement, protected graph: Graph) {
+  constructor(
+    protected canvas: HTMLCanvasElement,
+    protected graph: Graph,
+    private isDirected: boolean = false
+  ) {
     this.ctx = canvas.getContext('2d')!;
   }
 
@@ -10,7 +14,7 @@ export abstract class Drawer {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
-  protected line(point1: Point, point2: Point, isVisited: boolean) {
+  protected line(point1: Point, point2: Point, isVisited: boolean = false) {
     this.ctx.beginPath();
     this.ctx.fillStyle = isVisited ? '#c62828' : '#444444';
     this.ctx.moveTo(point1.left, point1.top);
